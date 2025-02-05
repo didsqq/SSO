@@ -46,6 +46,7 @@ func New(log *slog.Logger, userSave UserSave, userProvider UserProvider, appProv
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserExists         = errors.New("user already exists")
+	ErrAppNotFound        = errors.New("app not found")
 )
 
 func (a *Auth) Login(ctx context.Context, email, password string, appID int) (string, error) {
@@ -134,6 +135,11 @@ func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 
 	isAdmin, err := a.userProvider.IsAdmin(ctx, userID)
 	if err != nil {
+		if errors.Is(err, storage.ErrAppNotFound) {
+			log.Warn("app not found")
+
+			return false, ErrAppNotFound
+		}
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 
