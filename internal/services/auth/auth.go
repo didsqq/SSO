@@ -57,7 +57,7 @@ func (a *Auth) Login(ctx context.Context, email, password string, appID int) (st
 		slog.String("username", email),
 	)
 
-	log.Info("registering new user")
+	log.Info("login user")
 
 	user, err := a.userProvider.User(ctx, email)
 	if err != nil {
@@ -66,16 +66,22 @@ func (a *Auth) Login(ctx context.Context, email, password string, appID int) (st
 
 			return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 		}
+
+		a.log.Error("failed to get user", slog.StringValue(err.Error()))
+
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
-		a.log.Info("invalid credentials", slog.StringValue(err.Error()))
+		a.log.Warn("invalid credentials", slog.StringValue(err.Error()))
 
 		return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 	}
 
 	app, err := a.appProvider.App(ctx, appID)
 	if err != nil {
+		a.log.Warn("invalid app id", slog.StringValue(err.Error()))
+
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
