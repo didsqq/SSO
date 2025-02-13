@@ -47,6 +47,7 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserExists         = errors.New("user already exists")
 	ErrAppNotFound        = errors.New("app not found")
+	ErrUserNotFound       = errors.New("user not found")
 )
 
 func (a *Auth) Login(ctx context.Context, email, password string, appID int) (string, error) {
@@ -119,7 +120,7 @@ func (a *Auth) RegisterNewUser(ctx context.Context, email, password string) (int
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Warn("user already exists")
 
-			return 0, ErrUserExists
+			return 0, fmt.Errorf("%s: %w", op, ErrUserExists)
 		}
 		log.Error("failed to save user", slog.String("err", err.Error()))
 
